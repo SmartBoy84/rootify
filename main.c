@@ -13,19 +13,24 @@ int initialize()
 
         if (header)
         {
-            printf("\n[*] Storing commands - ");
-            commands = find_cmds(toolbox, header);
+                printf("\n[*] Storing commands - ");
+                commands = find_cmds(toolbox, header);
 
-            if (commands)
-            {
-                printf("\n[*] Finding offsets - ");
-                offsets = find_offsets(toolbox, commands);
-            }
+                if (commands)
+                {
+                    printf("\n[*] Finding offsets - ");
+                    offsets = find_offsets(toolbox, commands);
+                }
+
+            // offsets = calloc(1, sizeof(offsets_s));
+            // offsets->allproc = 34297704; // shhh
         }
     }
 
-    return !(toolbox && header && commands && offsets);
+    printf("\n");
+    return !(toolbox && header /* && commands */ && offsets);
 }
+void find_addr();
 
 int main()
 {
@@ -36,8 +41,23 @@ int main()
     }
 
     printf("Base at: %llu\n", toolbox->base);
-    printf("UID: %d\n", geteuid());
-    printf("allproc at: %llu", offsets->allproc);
+    printf("UID: %d, PID: %d\n", geteuid(), getpid());
+    printf("allproc at: %llu\n", offsets->allproc);
+
+    find_addr();
 
     return 0;
+}
+
+void find_addr()
+{
+    addr_t pid_off = 0x68;
+    addr_t name_off = 0x240;
+
+    addr_t next = 0;
+    char name[40] = {0};
+
+    toolbox->kread(toolbox->base + offsets->allproc + name_off, &name, 10);
+
+    printf("Name: %s", next);
 }

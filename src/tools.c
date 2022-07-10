@@ -133,12 +133,14 @@ addr_t find_allproc(krw_handlers *toolbox, segs_s *cmds)
     // finally, find allproc
     for (addr_t cur_p = reboot_kernel_p; cur_p < reboot_kernel_p + (20 * 4); cur_p += 4)
     {
-        addr_t target;
+        addr_t target = 0;
+        
         if ((target =
                  aarch64_emulate_adrp_ldr(*(uint32_t *)(tExec_b + cur_p), *(uint32_t *)(tExec_b + cur_p + 4), cur_p)))
             return target;
     }
 
+    printf("Failed to find allproc");
     return 0;
 }
 
