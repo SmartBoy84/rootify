@@ -51,7 +51,7 @@ krw_handlers *buy_toolbox()
         printf("Failed to read");
         return NULL;
     }
-    else if (machTest != machMagic)
+    else if (machTest != MH_MAGIC_64)
     {
         printf("Conflicting magic: %d", machTest);
         return NULL;
@@ -71,7 +71,7 @@ mach_header *parse_macho(krw_handlers *toolbox)
             return NULL;
         }
 
-    if (header->magic != machMagic)
+    if (header->magic != MH_MAGIC_64)
     {
         printf("Malformed header");
         return NULL;
@@ -84,27 +84,31 @@ segs_s *find_cmds(krw_handlers *toolbox, mach_header *header)
 {
     segs_s *commands = malloc(sizeof(segs_s));
 
-    commands->cStr = find_store_s64(toolbox, header, cmdPlh[n_cStr][0], cmdPlh[n_cStr][1]);
-    commands->tExec = find_store_s64(toolbox, header, cmdPlh[n_tExec][0], cmdPlh[n_tExec][1]);
-
-    return (commands->cStr && commands->tExec) ? commands : NULL;
+    // A bit ugly but I want to fail as soon as one command isn't found
+    if ((commands->cStr = find_store_s64(toolbox, header, cmdPlh[n_cStr][0], cmdPlh[n_cStr][1])) &&
+        (commands->tExec = find_store_s64(toolbox, header, cmdPlh[n_tExec][0], cmdPlh[n_tExec][1])))
+        return commands;
+    else
+        return NULL;
 }
 
 offsets_s *find_offsets(krw_handlers *toolbox, segs_s *cmds)
 {
     offsets_s *offs_s = malloc(sizeof(offsets_s));
 
-    offs_s->allproc = find_allproc(toolbox, cmds);
-
-    return (offs_s->allproc) ? offs_s : NULL;
+    // A bit ugly but I want to fail as soon as one offset isn't found
+    if ((offs_s->allproc = find_allproc(toolbox, cmds)))
+        return offs_s;
+    else
+        return NULL;
 }
 
 addr_t find_allproc(krw_handlers *toolbox, segs_s *cmds)
 {
     printf("allproc");
 
-    s64 *cStr = cmds->cStr->header;
-    s64 *tExec = cmds->tExec->header;
+    section_64 *cStr = cmds->cStr->header;
+    section_64 *tExec = cmds->tExec->header;
 
     // read the segments
     uint8_t *cStr_b = cmds->cStr->data;
@@ -134,7 +138,7 @@ addr_t find_allproc(krw_handlers *toolbox, segs_s *cmds)
     for (addr_t cur_p = reboot_kernel_p; cur_p < reboot_kernel_p + (20 * 4); cur_p += 4)
     {
         addr_t target = 0;
-        
+
         if ((target =
                  aarch64_emulate_adrp_ldr(*(uint32_t *)(tExec_b + cur_p), *(uint32_t *)(tExec_b + cur_p + 4), cur_p)))
             return target;
@@ -147,14 +151,14 @@ addr_t find_allproc(krw_handlers *toolbox, segs_s *cmds)
 uint8_t *find_lcmds(krw_handlers *toolbox, mach_header *header, uint32_t type)
 {
     addr_t sCmdPoint = toolbox->base + sizeof(mach_header);
-    lcmd tempcmd;
+    load_command tempcmd;
 
     uint8_t *wBuff = calloc(header->sizeofcmds + 1, sizeof(uint8_t));
     uint8_t *r_wBuff = wBuff + 1;
 
     for (int i = 0; i < header->ncmds; i++)
     {
-        if (toolbox->kread(sCmdPoint, &tempcmd, sizeof(tempcmd)))
+        if (toolbox->kread(sCmdPoint, &tempcmd, sizeof(load_command)))
         {
             printf("Failed to read load command");
             free(wBuff);
@@ -197,14 +201,14 @@ seg *find_store_s64(krw_handlers *toolbox, mach_header *header, const char *segN
 
     for (int i = *(rBuff++); i > 0; i--)
     {
-        s64cmd *s64cmd_t = (s64cmd *)rBuff;
+        segment_command_64 *s64cmd_t = (segment_command_64 *)rBuff;
 
         if (!strcmp(s64cmd_t->segname, segN))
         {
-            s64 *s64_t;
+            section_64 *s64_t;
             for (int i = 0; i < s64cmd_t->nsects; i++)
             {
-                s64_t = (s64 *)(rBuff + sizeof(s64cmd) + (i * sizeof(s64)));
+                s64_t = (section_64 *)(rBuff + sizeof(segment_command_64) + (i * sizeof(section_64)));
 
                 if (!strcmp(s64_t->sectname, sectN))
                 {
@@ -223,7 +227,7 @@ seg *find_store_s64(krw_handlers *toolbox, mach_header *header, const char *segN
                     {
                         seg *w_seg = malloc(sizeof(seg));
 
-                        s64 *r_s64_t = malloc(sizeof(s64));
+                        section_64 *r_s64_t = malloc(sizeof(section_64));
                         *r_s64_t = *s64_t;
 
                         w_seg->header = r_s64_t;

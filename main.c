@@ -1,6 +1,6 @@
 #include "main.h"
 
-#define FAST
+// #define FAST
 
 int initialize()
 {
@@ -33,7 +33,7 @@ int initialize()
         }
     }
 
-    printf("\n");
+    printf("\n\n");
     return !(toolbox && header && commands && offsets);
 }
 void find_addr();
@@ -48,8 +48,8 @@ int main()
 
     printf("Base at: %llu\n", toolbox->base);
     printf("UID: %d, PID: %d\n", geteuid(), getpid());
-    
-    // printf("allproc at: %llu\n", offsets->allproc);
+
+    printf("allproc at: %llu\n", offsets->allproc);
     // find_addr();
 
     return 0;
@@ -62,20 +62,23 @@ void find_addr()
 
     addr_t allproc;
 
-    if (toolbox->kread(toolbox->base + offsets->allproc, &allproc, sizeof(addr_t)))
-        printf("Failed to read allproc\n");
+    // if (toolbox->kread(toolbox->base + offsets->allproc, &allproc, sizeof(addr_t)))
+    //     printf("Failed to read allproc\n");
 
-    // allproc = allproc | 0xFFFFFF8000000000; ios 14.4.1 doesn't use pointer access codes
-    printf("allproc: %llu\n", allproc);
+    // // allproc = allproc | 0xFFFFFF8000000000; ios 14.4.1 doesn't use pointer access codes
+    // printf("allproc: %llu\n", allproc);
 
-    addr_t pid_off = 0x68;
-    addr_t name_off = 0x240;
+    addr_t pid_off = 0x10;
+    addr_t name_off = 0x1E8;
 
     uint32_t pid = 0;
     char name[40] = {0};
+
+    addr_t nextProc;
 
     if (toolbox->kread(toolbox->base + allproc + pid_off, &pid, sizeof(uint32_t)))
         printf("Failed");
 
     printf("Name: %d", pid);
+    // printf("Next proc: %llu", nextProc);
 }
