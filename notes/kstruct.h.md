@@ -1,3 +1,4 @@
+```c
 #ifndef KERN_H
 #define KERN_H
 
@@ -73,3 +74,4 @@ typedef struct
 } lcmd;
 
 #endif
+```
