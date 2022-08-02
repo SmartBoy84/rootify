@@ -1,7 +1,7 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include "tools.h"
+#include "include/tools.h"
 
 // global variables
 krw_handlers *toolbox;
