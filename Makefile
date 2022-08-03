@@ -1,4 +1,4 @@
-APP:=test
+APP:=rootify
 FILE:=*.c src/*.c
 FLAGS:=-I. -Iinclude -Linclude -L.
 

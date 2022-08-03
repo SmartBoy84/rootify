@@ -2,9 +2,7 @@
 #define MAIN_H
 
 #include "include/tools.h"
-
-// struct offsets
-#define __proc_pid 0x68
+#include "include/offsets.h"
 
 // global variables
 krw_handlers *toolbox;
@@ -13,5 +11,8 @@ mach_header *header;
 // structs
 segs_s *commands;
 offsets_s *offsets;
+
+// lazy boi
+#define slide(addr) (addr + toolbox->base)
 
 #endif

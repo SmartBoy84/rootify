@@ -1,8 +1,8 @@
 #include "main.h"
 
-//#define FAST
+#define FAST
 
-addr64_t virtBase = 0xFFFFFFF007004000; // what.
+addr64_t unslidVirtBase = 0xFFFFFFF007004000; // what. tbd find what this is
 addr64_t kernelSlide = 0;
 
 int initialize()
@@ -49,9 +49,10 @@ int main()
         return 1;
     }
 
-    kernelSlide = toolbox->base - virtBase; // what is this?
+    kernelSlide = toolbox->base - unslidVirtBase; // what is this?
+    printf("kernelslide? %llu\n", toolbox->base - 0xFFFFFFF007004000);
 
-    printf("Base at: %llu, kernelSlide: %llu\n", toolbox->base, kernelSlide);
+    printf("Base at: %llu, kernelSlide: %llu, allproc: %llu\n", toolbox->base, toolbox->kslide, toolbox->allproc);
     printf("UID: %d, PID: %d\n", geteuid(), getpid());
 
     printf("allproc at: %llu\n", offsets->allproc);
@@ -63,19 +64,20 @@ int main()
 void find_addr()
 {
     // https://github.com/apple/darwin-xnu/blob/main/bsd/sys/proc_internal.h
-    // YOU NEED TO READ THE FIRST ADDRESS
-    // 0xFFFFFF8000000000
+
     printf("\n");
 
     addr64_t allproc_s;
-    if (toolbox->kread(offsets->allproc + kernelSlide, &allproc_s, sizeof(allproc_s)))
+    if (toolbox->kread(toolbox->allproc + kernelSlide, &allproc_s, sizeof(allproc_s)))
     {
         printf("failed to find allproc struct :(");
         return;
     }
-    else
-    {
-        // allproc_s |= 0xFFFFFF8000000000;
-        printf("decoded: %llu\n", allproc_s);
-    }
+
+    printf("proc_struct at %llu\n", allproc_s);
+    pid_t first = 0;
+    if (toolbox->kread(allproc_s + __pidOffset, &first, sizeof(first)))
+        return;
+
+    printf("First pid: %d\n", first);
 }

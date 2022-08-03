@@ -13,14 +13,14 @@ krw_handlers *buy_toolbox()
 {
     krw_handlers *handlers = malloc(sizeof(krw_handlers));
 
-    char *libPath = "/usr/lib/libkrw/libFugu14Krw.dylib";
+    char *libPath = "/usr/lib/libkrw/libFugu14Krw_rootify.dylib";
     void *libHandle;
 
     printf("%s, ", libPath);
     if (!(libHandle = dlopen(libPath, RTLD_LAZY)))
     {
         printf("Failed to load library, error: %s", dlerror());
-        return NULL;
+        return 0;
     }
 
     printf("initializing, ");
@@ -28,7 +28,7 @@ krw_handlers *buy_toolbox()
     if (!(initialize = dlsym(libHandle, "krw_initializer")))
     {
         printf("Failed to call initializer function");
-        return NULL;
+        return 0;
     }
 
     printf("filling, ");
@@ -36,25 +36,25 @@ krw_handlers *buy_toolbox()
     if ((error = initialize(handlers)))
     {
         printf("Initializer failed: %d", error);
-        return NULL;
+        return 0;
     }
 
-    printf("testing r/w");
+    printf("testing r/w from base %llu", handlers->kslide);
     uint32_t machTest;
     if (!handlers->base)
     {
         printf("Failed to read kbase");
-        return NULL;
+        return 0;
     }
     else if (handlers->kread(handlers->base, &machTest, sizeof(uint32_t)))
     {
         printf("Failed to read");
-        return NULL;
+        return 0;
     }
     else if (machTest != MH_MAGIC_64)
     {
         printf("Conflicting magic: %d", machTest);
-        return NULL;
+        return 0;
     }
 
     // dlclose(libHandle);
@@ -68,13 +68,13 @@ mach_header *parse_macho(krw_handlers *toolbox)
         if (toolbox->kread(toolbox->base + (i * sizeof(uint32_t)), (uint32_t *)header + i, sizeof(uint32_t)))
         {
             printf("Failed reading macho header %d", i);
-            return NULL;
+            return 0;
         }
 
     if (header->magic != MH_MAGIC_64)
     {
         printf("Malformed header");
-        return NULL;
+        return 0;
     }
 
     return header;
@@ -89,7 +89,7 @@ segs_s *find_cmds(krw_handlers *toolbox, mach_header *header)
         (commands->tExec = find_store_s64(toolbox, header, cmdPlh[n_tExec][0], cmdPlh[n_tExec][1])))
         return commands;
     else
-        return NULL;
+        return 0;
 }
 
 offsets_s *find_offsets(krw_handlers *toolbox, segs_s *cmds)
@@ -100,7 +100,7 @@ offsets_s *find_offsets(krw_handlers *toolbox, segs_s *cmds)
     if ((offs_s->allproc = find_allproc(toolbox, cmds)))
         return offs_s;
     else
-        return NULL;
+        return 0;
 }
 
 addr64_t find_allproc(krw_handlers *toolbox, segs_s *cmds)
@@ -161,7 +161,7 @@ uint8_t *find_lcmds(krw_handlers *toolbox, mach_header *header, uint32_t type)
         {
             printf("Failed to read load command");
             free(wBuff);
-            return NULL;
+            return 0;
         }
 
         if (tempcmd.cmd == type)
@@ -170,7 +170,7 @@ uint8_t *find_lcmds(krw_handlers *toolbox, mach_header *header, uint32_t type)
             {
                 printf("Failed to write load command");
                 free(wBuff);
-                return NULL;
+                return 0;
             }
             *wBuff += 1; // increment counter
         }
@@ -182,7 +182,7 @@ uint8_t *find_lcmds(krw_handlers *toolbox, mach_header *header, uint32_t type)
     if (!(*wBuff))
         printf("Found no instances of cmd 0x%x", type);
 
-    return *wBuff ? wBuff : NULL;
+    return *wBuff ? wBuff : 0;
 }
 
 seg *find_store_s64(krw_handlers *toolbox, mach_header *header, const char *segN, const char *sectN)
@@ -193,7 +193,7 @@ seg *find_store_s64(krw_handlers *toolbox, mach_header *header, const char *segN
     if (!(buff = find_lcmds(toolbox, header, LC_SEGMENT_64)))
     {
         printf("Failed to find any s64 segments, idk");
-        return NULL;
+        return 0;
     }
 
     uint8_t *rBuff = buff;
@@ -220,7 +220,7 @@ seg *find_store_s64(krw_handlers *toolbox, mach_header *header, const char *segN
                         free(buff);
                         free(Data);
 
-                        return NULL; // consider the whole struct dead if the data can't be read
+                        return 0; // consider the whole struct dead if the data can't be read
                     }
                     else
                     {
@@ -243,5 +243,5 @@ seg *find_store_s64(krw_handlers *toolbox, mach_header *header, const char *segN
 
     free(buff);
     printf("Failed to find %s in %s", sectN, segN);
-    return NULL;
+    return 0;
 }
