@@ -2,7 +2,7 @@ APP:=test
 FILE:=*.c src/*.c
 FLAGS:=-I. -Iinclude -Linclude -L.
 
-IP:=192.168.0.251
+IP:=172.20.10.1
 ADDR:=mobile@$(IP)
 UPLOAD_DIR:=/var/mobile/Downloads
 

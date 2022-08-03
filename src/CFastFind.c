@@ -11,7 +11,7 @@
 // But then I wouldn't have been able to just copy+paste from the original Fugu
 // (Swift implementation would probably be slower as well)
 
-#include "CFastFind.h"
+#include "../include/CFastFind.h"
 
 bool CFastFind(const void* __nonnull buffer, size_t bufLen, const uint32_t* __nonnull insts, size_t instLen, size_t* __nonnull offset) {
     if (instLen == 0) {

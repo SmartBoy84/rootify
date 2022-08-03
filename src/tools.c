@@ -1,4 +1,4 @@
-#include "tools.h"
+#include "../include/tools.h"
 
 // all the segments to load
 const char *cmdPlh[][2] = {{"__TEXT", "__cstring"}, {"__TEXT_EXEC", "__text"}};
@@ -41,7 +41,7 @@ krw_handlers *buy_toolbox()
 
     printf("testing r/w");
     uint32_t machTest;
-    if (handlers->kbase(&handlers->base))
+    if (!handlers->base)
     {
         printf("Failed to read kbase");
         return NULL;
@@ -103,7 +103,7 @@ offsets_s *find_offsets(krw_handlers *toolbox, segs_s *cmds)
         return NULL;
 }
 
-addr_t find_allproc(krw_handlers *toolbox, segs_s *cmds)
+addr64_t find_allproc(krw_handlers *toolbox, segs_s *cmds)
 {
     printf("allproc");
 
@@ -115,17 +115,17 @@ addr_t find_allproc(krw_handlers *toolbox, segs_s *cmds)
     uint8_t *tExec_b = cmds->tExec->data;
 
     char shutdownwait_s[] = "shutdownwait";
-    addr_t shutdownwait_p;
+    addr64_t shutdownwait_p;
 
-    if (!(shutdownwait_p = (addr_t)memmem(cStr_b, cStr->size, &shutdownwait_s, sizeof(shutdownwait_s))))
+    if (!(shutdownwait_p = (addr64_t)memmem(cStr_b, cStr->size, &shutdownwait_s, sizeof(shutdownwait_s))))
     {
         printf("Failed to find needle");
         return 0;
     }
     else
-        shutdownwait_p += cStr->addr - (addr_t)cStr_b; // reorient the [relative] 'pointer'
+        shutdownwait_p += cStr->addr - (addr64_t)cStr_b; // reorient the [relative] 'pointer'
 
-    addr_t reboot_kernel_p;
+    addr64_t reboot_kernel_p;
     if (!(reboot_kernel_p = find_xref_to(tExec_b, tExec_b + tExec->size, shutdownwait_p, tExec->addr)))
     {
         printf("Failed to find xref to shutdown_wait");
@@ -135,10 +135,9 @@ addr_t find_allproc(krw_handlers *toolbox, segs_s *cmds)
         reboot_kernel_p -= tExec->addr; // given we already know it's in that section
 
     // finally, find allproc
-    for (addr_t cur_p = reboot_kernel_p; cur_p < reboot_kernel_p + (20 * 4); cur_p += 4)
+    addr64_t target = 0;
+    for (addr64_t cur_p = reboot_kernel_p; cur_p < reboot_kernel_p + (20 * 4); cur_p += 4)
     {
-        addr_t target = 0;
-
         if ((target =
                  aarch64_emulate_adrp_ldr(*(uint32_t *)(tExec_b + cur_p), *(uint32_t *)(tExec_b + cur_p + 4), cur_p)))
             return target;
@@ -150,7 +149,7 @@ addr_t find_allproc(krw_handlers *toolbox, segs_s *cmds)
 
 uint8_t *find_lcmds(krw_handlers *toolbox, mach_header *header, uint32_t type)
 {
-    addr_t sCmdPoint = toolbox->base + sizeof(mach_header);
+    addr64_t sCmdPoint = toolbox->base + sizeof(mach_header);
     load_command tempcmd;
 
     uint8_t *wBuff = calloc(header->sizeofcmds + 1, sizeof(uint8_t));

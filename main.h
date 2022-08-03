@@ -3,6 +3,9 @@
 
 #include "include/tools.h"
 
+// struct offsets
+#define __proc_pid 0x68
+
 // global variables
 krw_handlers *toolbox;
 mach_header *header;

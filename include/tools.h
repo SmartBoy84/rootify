@@ -15,9 +15,6 @@
 #include <string.h>
 #include <unistd.h>
 
-// uint64_t, common type for data in 64bit *os devices
-typedef uint64_t addr_t;
-
 // Mach-O structs
 // I'm lazy, sue me
 typedef struct segment_command_64 segment_command_64; // s64 load data
@@ -39,7 +36,7 @@ typedef struct {
 
 // offsets
 typedef struct {
-  addr_t allproc;
+  addr64_t allproc;
 } offsets_s;
 
 // functions //
@@ -54,7 +51,7 @@ mach_header *parse_macho(krw_handlers *toolbox);
 offsets_s *find_offsets(krw_handlers *toolbox, segs_s *cmds);
 
 // find [relative] address of allproc
-addr_t find_allproc(krw_handlers *toolbox, segs_s *cmds);
+addr64_t find_allproc(krw_handlers *toolbox, segs_s *cmds);
 
 // find and store all the needed load commands
 segs_s *find_cmds(krw_handlers *toolbox, mach_header *header);

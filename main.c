@@ -1,6 +1,9 @@
 #include "main.h"
 
-// #define FAST
+//#define FAST
+
+addr64_t virtBase = 0xFFFFFFF007004000; // what.
+addr64_t kernelSlide = 0;
 
 int initialize()
 {
@@ -46,39 +49,33 @@ int main()
         return 1;
     }
 
-    printf("Base at: %llu\n", toolbox->base);
+    kernelSlide = toolbox->base - virtBase; // what is this?
+
+    printf("Base at: %llu, kernelSlide: %llu\n", toolbox->base, kernelSlide);
     printf("UID: %d, PID: %d\n", geteuid(), getpid());
 
     printf("allproc at: %llu\n", offsets->allproc);
-    // find_addr();
+    find_addr();
 
     return 0;
 }
 
 void find_addr()
 {
+    // https://github.com/apple/darwin-xnu/blob/main/bsd/sys/proc_internal.h
     // YOU NEED TO READ THE FIRST ADDRESS
     // 0xFFFFFF8000000000
+    printf("\n");
 
-    addr_t allproc;
-
-    // if (toolbox->kread(toolbox->base + offsets->allproc, &allproc, sizeof(addr_t)))
-    //     printf("Failed to read allproc\n");
-
-    // // allproc = allproc | 0xFFFFFF8000000000; ios 14.4.1 doesn't use pointer access codes
-    // printf("allproc: %llu\n", allproc);
-
-    addr_t pid_off = 0x10;
-    addr_t name_off = 0x1E8;
-
-    uint32_t pid = 0;
-    char name[40] = {0};
-
-    addr_t nextProc;
-
-    if (toolbox->kread(toolbox->base + allproc + pid_off, &pid, sizeof(uint32_t)))
-        printf("Failed");
-
-    printf("Name: %d", pid);
-    // printf("Next proc: %llu", nextProc);
+    addr64_t allproc_s;
+    if (toolbox->kread(offsets->allproc + kernelSlide, &allproc_s, sizeof(allproc_s)))
+    {
+        printf("failed to find allproc struct :(");
+        return;
+    }
+    else
+    {
+        // allproc_s |= 0xFFFFFF8000000000;
+        printf("decoded: %llu\n", allproc_s);
+    }
 }
