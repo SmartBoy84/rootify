@@ -2,7 +2,7 @@ APP:=rootify
 FILE:=*.c src/*.c
 FLAGS:=-I. -Iinclude -Linclude -L.
 
-IP:=172.20.10.1
+IP:=le-carote
 ADDR:=mobile@$(IP)
 UPLOAD_DIR:=/var/mobile/Downloads
 

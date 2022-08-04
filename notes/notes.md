@@ -9,3 +9,10 @@ Important, load command structs are stored atop their data (cmd size includes
 #define LC_SEGMENT_64 0x19 /* 64 bit segment */
 #define LC_UUID 0x1b       /* the uuid */
 ```
+
+reading from the allproc offset gives the address to the proc struct of the latest spawned process
+it's better to use a while loop (reading backwards along the linked list) to match pids rather than assume that the proc at that pointer is the running process (other processes could have spawned in the time the process was run)
+Checkout jakeshack dummy guide/write up on his rootless 'jailbreak'
+
+https://github.com/apple/darwin-xnu/blob/main/security/_label.h#L83
+sandbox escaped by nullifying pointer in sandbox slot
