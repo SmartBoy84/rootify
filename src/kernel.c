@@ -113,7 +113,7 @@ offsets_s *find_offsets(krw_handlers *toolbox)
 
 addr64_t find_pid(krw_handlers *toolbox, pid_t pid)
 {
-    printf("pid: %d ", pid);
+    printf("finding pid: %d ", pid);
 
     addr64_t allproc_s;
     if (toolbox->kread(toolbox->offsets->allproc + toolbox->slide, &allproc_s, sizeof(allproc_s)))

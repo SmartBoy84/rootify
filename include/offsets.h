@@ -14,7 +14,7 @@ Slide can be found by finding offset of actual runtime load address (krw_handler
 #define __textvp 0x220
 #define __csFlagsOffset 0x280
 
-// // ucred struct
+// ucred struct
 #define __cr_uid 0x18
 #define __cr_ruid 0x1c
 #define __cr_svuid 0x20
@@ -23,6 +23,6 @@ Slide can be found by finding offset of actual runtime load address (krw_handler
 #define __cr_svgid 0x7a
 
 #define __label 0x78
-#define __sandbox_slot 0x10
+#define __sandbox_slot 0x10 // contains a non-null for sandboxed processes
 
 #endif

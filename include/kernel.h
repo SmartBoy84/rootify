@@ -1,5 +1,5 @@
-#ifndef TOOLS_H
-#define TOOLS_H
+#ifndef KERNEL_H
+#define KERNEL_H
 
 #include "CFastFind.h"
 #include "offsets.h"
@@ -15,7 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 
-// lazy
+// strip pointer authentication codes (PAC) from signed pointers (arm64e)
 #define STRIP_PAC(ptr) (ptr | 0xFFFFFF8000000000)
 
 // Mach-O structs
@@ -55,7 +55,7 @@ typedef struct krw_handlers
     uint64_t version; // Remove
     uint64_t base;    // Kernel runtime load address
     uint64_t kslide;  // Remove
-    uint64_t allproc; // Allproc address (to load from custom Fugu14)
+    uint64_t allproc; // Allproc address
 
     krw_kread_func_t kread;
     krw_kwrite_func_t kwrite;
@@ -74,7 +74,7 @@ typedef int (*krw_plugin_initializer_t)(krw_handlers *handlers);
 
 // functions //
 
-// fill a krw_handler with functions from fugu's krw dylib
+// initialize a krw_handler - fill functions from fugu's krw dylib + appropriate structs
 krw_handlers *buy_toolbox();
 
 // parse a macho header and store it into a readable mach_header struct
