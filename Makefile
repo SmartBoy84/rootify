@@ -1,4 +1,4 @@
-APP:=rootify
+APP:=rootme
 FILE:=*.c src/*.c
 FLAGS:=-I. -Iinclude -Linclude -L.
 

@@ -47,8 +47,8 @@ int elevate(krw_handlers *toolbox, pid_t pid)
 
     // printf("nulling at %llu", cs_label_s);
 
-    // uint64_t null = 0;
-    // if (toolbox->kwrite(&null, cs_label_s + __sandbox_slot, sizeof(uint64_t)))
+    // uint32_t null[5] = {0, 0, 0, 1, 0};
+    // if (toolbox->kwrite((void*)null, cs_label_s + __sandbox_slot, sizeof(uint32_t)*5))
     // {
     //     printf("Failed to nullify sandbox slot :(\n");
     //     return 1;
