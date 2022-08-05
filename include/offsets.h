@@ -23,6 +23,7 @@ Slide can be found by finding offset of actual runtime load address (krw_handler
 #define __cr_svgid 0x7a
 
 #define __label 0x78
+#define __cr_audit 0x80
 #define __sandbox_slot 0x10 // contains a non-null for sandboxed processes
 
 #endif

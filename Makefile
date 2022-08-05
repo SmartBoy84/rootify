@@ -1,6 +1,6 @@
 APP:=rootme
 FILE:=*.c src/*.c
-FLAGS:=-I. -Iinclude -Linclude -L.
+FLAGS:=-I. -L. -Iinclude -Linclude -Iheaders -Lheaders
 
 IP:=le-carote
 ADDR:=mobile@$(IP)
