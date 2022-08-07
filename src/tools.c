@@ -71,3 +71,32 @@ int copy_ucred(krw_handlers *toolbox, pid_t from, pid_t to)
         https://github.com/apple/darwin-xnu/blob/main/bsd/sys/ucred.h#L89
         */
 }
+
+int testRW()
+{
+    FILE *fptr = fopen("/test.txt", "rw");
+
+    char string[] = "hello world!";
+    char *buffer = malloc(sizeof(string));
+
+    int status = 1;
+
+    if (!(fptr && fwrite(string, sizeof(char), sizeof(string), fptr)))
+        printf("Failed to write to root! :(\n");
+    else
+    {
+        fflush(fptr);
+        fseek(fptr, 0, SEEK_SET);
+
+        if (!fread(buffer, sizeof(char), sizeof(string), fptr))
+            printf("failed to read file from root! :( \n");
+        else
+        {
+            status = 1;
+            printf("Wrote: %s, read %s\n", string, buffer);
+        }
+    }
+
+    fclose(fptr);
+    return status;
+}
