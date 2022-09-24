@@ -8,6 +8,7 @@
 
 // argh, yes I'm importing a lot of standard libraries, I can't be bothered
 // remaking the one or two functions I use tho
+#include <mach/mach_init.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -42,11 +43,12 @@ typedef struct
 // offsets
 typedef struct
 {
-    addr64_t allproc;  // address of pointer to currently running proc
+    addr64_t allproc; // address of pointer to currently running proc
+    addr64_t myproc;  // address of proc of current process
+    addr64_t mytask;  // address of task of current process
 
     // *** not configured ***
     addr64_t kernproc; // address of kernel proc
-    addr64_t myproc;   // address of proc of current process
 } offsets_s;
 
 typedef int (*krw_kread_func_t)(uint64_t from, void *to, size_t len);
@@ -70,6 +72,9 @@ typedef struct krw_handlers
     segs_s *commands;
     offsets_s *offsets;
 
+    // test
+    int initialised;
+
 } krw_handlers;
 
 typedef int (*krw_plugin_initializer_t)(krw_handlers *handlers);
@@ -79,6 +84,9 @@ typedef int (*krw_plugin_initializer_t)(krw_handlers *handlers);
 // initialize a krw_handler - fill functions from fugu's krw dylib + appropriate structs
 krw_handlers *buy_toolbox();
 
+// read a kernel pointer - strips PAC
+addr64_t read_pointer(krw_handlers *toolbox, addr64_t ptr_addr);
+
 // parse a macho header and store it into a readable mach_header struct
 mach_header *parse_macho(krw_handlers *toolbox);
 
@@ -87,6 +95,9 @@ offsets_s *find_offsets(krw_handlers *toolbox);
 
 // find [relative] address of allproc
 addr64_t find_allproc(krw_handlers *toolbox);
+
+// find task address for a port
+addr64_t find_port(krw_handlers *toolbox, mach_port_name_t port);
 
 // find and store all the needed load commands
 segs_s *find_cmds(krw_handlers *toolbox);

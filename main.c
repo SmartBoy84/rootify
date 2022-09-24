@@ -2,7 +2,7 @@
 
 /*
 NOTE:
-if returning in the future remember to fix find_offsets() + restore find_cmds() functionality
+if returning in the future remember to fix find_allproc() + restore find_cmds() functionality
 Temp changes are labelled: "FIX ME"
 */
 
@@ -33,7 +33,7 @@ int initialize()
     }
 
     printf("\n");
-    return !(toolbox && toolbox->header && toolbox->commands && toolbox->offsets);
+    return !(toolbox->initialised = (toolbox && toolbox->header && toolbox->commands && toolbox->offsets));
 }
 
 int main()
@@ -48,11 +48,11 @@ int main()
 
     printf("\n[*] Base at: 0x%llx, kaslr slide: 0x%llx, kern struct: 0x%llx", toolbox->base, toolbox->slide,
            find_proc(toolbox, 0));
-    printf("\n[*] Stealing the keys and breaking myself out - ");
-    if (safe_elevate(toolbox, getpid()) || testRW())
-        return 1;
+    printf("\n[*] Allproc: %llx, task_port: %llx", toolbox->allproc, toolbox->offsets->mytask);
 
-    printf("\n[*] selftask: %llx", find_self_task(toolbox));
+    printf("\n[*] Stealing the keys and breaking myself out - ");
+    if (safe_elevate(toolbox, getpid()) || test_rw())
+        return 1;
 
     return 0;
 }

@@ -11,7 +11,7 @@ enum // 'lookup table' for cmdPlh
 
 krw_handlers *buy_toolbox()
 {
-    krw_handlers *handlers = malloc(sizeof(krw_handlers));
+    krw_handlers *handlers = calloc(sizeof(krw_handlers), sizeof(char));
 
     char *libPath = "/usr/lib/libkrw/libFugu14Krw_rootify.dylib";
     void *libHandle;
@@ -67,6 +67,13 @@ krw_handlers *buy_toolbox()
     return handlers;
 }
 
+//  a bit memory inefficient but I prefer this as it's more readable
+addr64_t read_pointer(krw_handlers *toolbox, addr64_t ptr_addr)
+{
+    addr64_t ptr;
+    return toolbox->kread(ptr_addr, &ptr, sizeof(addr64_t)) ? 0 : STRIP_PAC(ptr);
+}
+
 mach_header *parse_macho(krw_handlers *toolbox)
 {
     mach_header *header = malloc(sizeof(mach_header));
@@ -101,12 +108,10 @@ segs_s *find_cmds(krw_handlers *toolbox)
 
 addr64_t find_proc(krw_handlers *toolbox, pid_t pid)
 {
-    printf("finding proc for pid: %d ", pid);
-
     addr64_t allproc_s;
     if (toolbox->kread(toolbox->offsets->allproc + toolbox->slide, &allproc_s, sizeof(allproc_s)))
     {
-        printf("Failed to read allproc\n");
+        printf("Failed to read allproc: %llx\n", toolbox->offsets->allproc);
         return 0;
     }
 
@@ -129,17 +134,19 @@ addr64_t find_proc(krw_handlers *toolbox, pid_t pid)
 
 offsets_s *find_offsets(krw_handlers *toolbox)
 {
-    offsets_s *offs_s = malloc(sizeof(offsets_s));
+    offsets_s *offs_s = toolbox->initialised ? malloc(sizeof(offsets_s)) : toolbox->offsets;
 
-    // A bit ugly but I want to fail as soon as one offset isn't found
-    if ((offs_s->allproc = find_allproc(toolbox)))
-        return offs_s;
-    else
-        return 0;
+        // A bit ugly but I want to fail as soon as one offset isn't found
+        if ((offs_s->allproc = find_allproc(toolbox)) && (offs_s->myproc = find_proc(toolbox, getpid())) &&
+            (offs_s->mytask = find_port(toolbox, mach_task_self())))
+            return offs_s;
+        else
+            return 0;
 }
 
 addr64_t find_allproc(krw_handlers *toolbox)
 {
+    printf("Using preset allproc");
     return toolbox->allproc; // FIX ME
 
     printf("allproc");
@@ -182,6 +189,53 @@ addr64_t find_allproc(krw_handlers *toolbox)
 
     printf("Failed to find allproc");
     return 0;
+}
+
+addr64_t find_port(krw_handlers *toolbox, mach_port_name_t port)
+{
+    // from here: https://github.com/jakeajames/multi_path/blob/master/multi_path/jelbrek/kern_utils.m
+
+    printf("Finding task for port %x", port);
+
+    if (!toolbox->offsets->myproc)
+    {
+        printf("myproc not initiliased in struct?\n");
+        return 0;
+    }
+
+    uint64_t task_addr, itk_space, is_table = 0;
+
+    // From our proc -> task_struct -> itk_space (ports)
+    if (!(task_addr = read_pointer(toolbox, toolbox->offsets->myproc + __task_offset)) ||
+        (!(itk_space = read_pointer(toolbox, task_addr + __itk_space_offset))) ||
+        (!(is_table = read_pointer(toolbox, itk_space + __is_table_offset))))
+    {
+        printf("Failed to read task details\n");
+        return 0;
+    }
+
+    // get this process's mach port
+    uint32_t port_index = port >> 8;
+
+    // Now read the address associated with our port in the itk_space (just use our own processes port space)
+    addr64_t port_addr = 0;
+    if (!(port_addr = read_pointer(toolbox, is_table + (port_index * __sizeof_ipc_entry_t))))
+    {
+        printf("So close! Failed to read port_addr");
+        return 0;
+    }
+
+    addr64_t selfproc2 = read_pointer(toolbox, port_addr + __bsd_info);
+    if (selfproc2 != 1)
+    {
+        printf("ohter %llx %llx %llx", task_addr, itk_space, is_table);
+    }
+
+    /* ipc_entry defined here: (https://opensource.apple.com/source/xnu/xnu-201/osfmk/ipc/ipc_entry.h.auto.html)
+    more here: https://github.com/maximehip/mach_portal
+    basically this is used to map the port name (userland representation) to the port object (kernel representation)*/
+
+    return port_addr;
 }
 
 uint8_t *find_lcmds(krw_handlers *toolbox, uint32_t type)

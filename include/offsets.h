@@ -19,6 +19,7 @@ Slide can be found by finding _offset of actual runtime load address (krw_handle
 #define __thread_offset 0x58
 #define __thread_count_offset 0x80
 #define __itk_space_offset 0x330
+#define __bsd_info 0x3A0
 
 // ucred struct
 #define __cr_uid_offset 0x18

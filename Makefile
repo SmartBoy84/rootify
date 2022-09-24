@@ -1,4 +1,4 @@
-APP:=rootme
+APP:=rootmepls
 FILE:=*.c src/*.c
 FLAGS:=-I. -L. -Iinclude -Linclude -Iheaders -Lheaders
 

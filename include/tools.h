@@ -3,13 +3,22 @@
 
 #include "../headers/ucred.h"
 #include "kernel.h"
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
+// find address of the task of currently running process
 addr64_t find_self_task(krw_handlers *toolbox);
+
+// safely elevate a process to root
 int safe_elevate(krw_handlers *toolbox, pid_t pid);
+
+// read a kernel pointer
 addr64_t read_pointer(krw_handlers *toolbox, addr64_t ptr_addr);
+
+// cope a process's ucred
 int copy_ucred(krw_handlers *toolbox, pid_t from, pid_t to);
-int testRW();
+
+// rest filesystem root r/w
+int test_rw();
 
 #endif
