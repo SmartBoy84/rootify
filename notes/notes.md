@@ -1,3 +1,5 @@
+bunch of offsets here - https://github.com/jakeajames/multi_path/blob/b8ff6c07d6c2177c68067cb423f62eb3f1c2a213/multi_path/jailbreakd/offsetof.c
+
 src - https://h3adsh0tzz.com/2020/01/macho-file-format and https://opensource.apple.com/source/xnu/xnu-4570.1.46/EXTERNAL_HEADERS/mach-o/loader.h.auto.html
 
 Important, load command structs are stored atop their data (cmd size includes

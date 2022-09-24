@@ -89,6 +89,7 @@ mach_header *parse_macho(krw_handlers *toolbox)
 segs_s *find_cmds(krw_handlers *toolbox)
 {
     segs_s *commands = malloc(sizeof(segs_s));
+    return commands; // FIX ME
 
     // A bit ugly but I want to fail as soon as one command isn't found
     if ((commands->cStr = find_store_s64(toolbox, cmdPlh[n_cStr][0], cmdPlh[n_cStr][1])) &&
@@ -98,22 +99,9 @@ segs_s *find_cmds(krw_handlers *toolbox)
         return 0;
 }
 
-offsets_s *find_offsets(krw_handlers *toolbox)
+addr64_t find_proc(krw_handlers *toolbox, pid_t pid)
 {
-    offsets_s *offs_s = malloc(sizeof(offsets_s));
-
-    // A bit ugly but I want to fail as soon as one offset isn't found
-    if ((offs_s->allproc = toolbox->allproc))
-        return offs_s;
-    else
-        return 0;
-
-    //(offs_s->allproc = find_allproc(toolbox, cmds))
-}
-
-addr64_t find_pid(krw_handlers *toolbox, pid_t pid)
-{
-    printf("finding pid: %d ", pid);
+    printf("finding proc for pid: %d ", pid);
 
     addr64_t allproc_s;
     if (toolbox->kread(toolbox->offsets->allproc + toolbox->slide, &allproc_s, sizeof(allproc_s)))
@@ -125,7 +113,7 @@ addr64_t find_pid(krw_handlers *toolbox, pid_t pid)
     pid_t tpid;
     for (;;)
     {
-        if (toolbox->kread(allproc_s + __pidOffset, &tpid, sizeof(tpid)))
+        if (toolbox->kread(allproc_s + __pid_offset, &tpid, sizeof(tpid)))
             break;
 
         if (tpid == pid)
@@ -139,8 +127,21 @@ addr64_t find_pid(krw_handlers *toolbox, pid_t pid)
     return 0;
 }
 
+offsets_s *find_offsets(krw_handlers *toolbox)
+{
+    offsets_s *offs_s = malloc(sizeof(offsets_s));
+
+    // A bit ugly but I want to fail as soon as one offset isn't found
+    if ((offs_s->allproc = find_allproc(toolbox)))
+        return offs_s;
+    else
+        return 0;
+}
+
 addr64_t find_allproc(krw_handlers *toolbox)
 {
+    return toolbox->allproc; // FIX ME
+
     printf("allproc");
 
     section_64 *cStr = toolbox->commands->cStr->header;

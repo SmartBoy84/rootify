@@ -42,7 +42,9 @@ typedef struct
 // offsets
 typedef struct
 {
-    addr64_t allproc;  // address of pointer to start of proc linked list
+    addr64_t allproc;  // address of pointer to currently running proc
+
+    // *** not configured ***
     addr64_t kernproc; // address of kernel proc
     addr64_t myproc;   // address of proc of current process
 } offsets_s;
@@ -96,6 +98,6 @@ uint8_t *find_lcmds(krw_handlers *toolbox, uint32_t type);
 seg *find_store_s64(krw_handlers *toolbox, const char *segN, const char *sectN);
 
 // find proc struct of program with the pid in the linked list in kernel mem (1 limitation, check error)
-addr64_t find_pid(krw_handlers *toolbox, pid_t pid);
+addr64_t find_proc(krw_handlers *toolbox, pid_t pid);
 
 #endif

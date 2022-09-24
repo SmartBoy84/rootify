@@ -1,5 +1,11 @@
 #include "main.h"
 
+/*
+NOTE:
+if returning in the future remember to fix find_offsets() + restore find_cmds() functionality
+Temp changes are labelled: "FIX ME"
+*/
+
 #define FAST
 
 int initialize()
@@ -17,8 +23,7 @@ int initialize()
         {
             printf("\n[*] Storing commands - ");
 
-            // commands = find_cmds(toolbox, header);
-            toolbox->commands = 1; // um, yeah
+            toolbox->commands = find_cmds(toolbox);
             if (toolbox->commands)
             {
                 printf("\n[*] Finding offsets - ");
@@ -41,12 +46,13 @@ int main()
         return 1;
     }
 
-    printf("\n[*] Base at: %llu, kaslr slide: %llu, kern struct: %llu", toolbox->base, toolbox->slide,
-           toolbox->offsets->kernproc);
-
+    printf("\n[*] Base at: 0x%llx, kaslr slide: 0x%llx, kern struct: 0x%llx", toolbox->base, toolbox->slide,
+           find_proc(toolbox, 0));
     printf("\n[*] Stealing the keys and breaking myself out - ");
     if (safe_elevate(toolbox, getpid()) || testRW())
         return 1;
+
+    printf("\n[*] selftask: %llx", find_self_task(toolbox));
 
     return 0;
 }

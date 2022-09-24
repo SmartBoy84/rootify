@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+addr64_t find_self_task(krw_handlers *toolbox);
 int safe_elevate(krw_handlers *toolbox, pid_t pid);
 addr64_t read_pointer(krw_handlers *toolbox, addr64_t ptr_addr);
 int copy_ucred(krw_handlers *toolbox, pid_t from, pid_t to);
