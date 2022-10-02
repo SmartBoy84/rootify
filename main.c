@@ -42,7 +42,7 @@ int main()
 
     if (initialize())
     {
-        printf("Failed setup :(\n");
+        printf("Faile setup :(\n");
         return 1;
     }
 
