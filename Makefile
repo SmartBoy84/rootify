@@ -1,9 +1,11 @@
-APP:=rootmepls
+APP:=rootme
 FILE:=*.c src/*.c
 FLAGS:=-I. -L. -Iinclude -Linclude -Iheaders -Lheaders
 
 IP:=le-carote
 ADDR:=mobile@$(IP)
+PORT:=44
+SSH:=ssh
 UPLOAD_DIR:=/var/mobile/Downloads
 
 # end of configurable variables
@@ -26,18 +28,19 @@ build:
 sign:
 	@echo "$(arrow)$(green)Signing ${APP}$(red)"
 	@chmod +x ${APP}
+	@trustcache create $(APP).tc $(APP)
 # @ldid -Sent.xml ${APP}
 
 upload:
 	@echo "$(arrow)$(green)Uploading ${APP}$(end)"
-	@scp -q ${APP} ${ADDR}:${UPLOAD_DIR}
+	@scp -P $(PORT) -q ${APP} ${APP}.tc ${ADDR}:${UPLOAD_DIR}
 
 run:
-	@if ! ssh $(ADDR) "stat $(UPLOAD_DIR)/$(APP)" >/dev/null; then (echo "$(arrow)$(red)Build the app first!$(end)"; $(RERUN); $(RERUN) upload); fi
+	@if ! ssh -p $(PORT) $(ADDR) "stat $(UPLOAD_DIR)/$(APP)" >/dev/null; then (echo "$(arrow)$(red)Build the app first!$(end)"; $(RERUN); $(RERUN) upload); fi
 
 	@echo "$(arrow)$(green)Running ${APP}$(end)"
-	-@ssh $(ADDR) "cd $(UPLOAD_DIR); ldid -Sent.xml $(APP); printf '\n'; ./${APP}; printf '\n'"
+	-@ssh -p $(PORT) $(ADDR) "cd $(UPLOAD_DIR); ldid -Sent.xml $(APP); printf '\n'; ./${APP}; printf '\n'"
 
 clean:
 	@echo "$(arrow)$(green)Cleaning up!$(end)"
-	@rm ${APP}
+	@rm ${APP} $(APP).tc
