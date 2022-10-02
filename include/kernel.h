@@ -44,8 +44,10 @@ typedef struct
 typedef struct
 {
     addr64_t allproc; // address of pointer to currently running proc
-    addr64_t myproc;  // address of proc of current process
-    addr64_t mytask;  // address of task of current process
+
+    addr64_t my_proc;
+    addr64_t my_task_port; // proc of current process
+    addr64_t my_task_addr; // task of current process
 
     // *** not configured ***
     addr64_t kernproc; // address of kernel proc

@@ -21,6 +21,17 @@ Slide can be found by finding _offset of actual runtime load address (krw_handle
 #define __itk_space_offset 0x330
 #define __bsd_info 0x3A0
 
+// ipc_port - from Taurine
+#define __io_references_offset 0x04
+#define __ip_mscount_offset 0x9C
+#define __ip_receiver_offset 0x60
+#define __ip_srights_offset 0xa0
+#define __ip_kobject_offset 0x68 // this stores the address to the proc struct in the kernel
+
+// ipc_space
+#define __sizeof_ipc_entry_t 0x18
+#define __is_table_offset 0x20
+
 // ucred struct
 #define __cr_uid_offset 0x18
 #define __cr_ruid_offset 0x1c
@@ -32,9 +43,5 @@ Slide can be found by finding _offset of actual runtime load address (krw_handle
 #define __label_offset 0x78
 #define __cr_audit_offset 0x80
 #define __sandbox_slot_offset 0x10 // contains a non-null for sandboxed processes
-
-// itk_space
-#define __sizeof_ipc_entry_t 0x18
-#define __is_table_offset 0x20
 
 #endif

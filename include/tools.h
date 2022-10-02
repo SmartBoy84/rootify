@@ -6,9 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// find address of the task of currently running process
-addr64_t find_self_task(krw_handlers *toolbox);
-
 // safely elevate a process to root
 int safe_elevate(krw_handlers *toolbox, pid_t pid);
 

@@ -136,12 +136,13 @@ offsets_s *find_offsets(krw_handlers *toolbox)
 {
     offsets_s *offs_s = toolbox->initialised ? malloc(sizeof(offsets_s)) : toolbox->offsets;
 
-        // A bit ugly but I want to fail as soon as one offset isn't found
-        if ((offs_s->allproc = find_allproc(toolbox)) && (offs_s->myproc = find_proc(toolbox, getpid())) &&
-            (offs_s->mytask = find_port(toolbox, mach_task_self())))
-            return offs_s;
-        else
-            return 0;
+    // A bit ugly but I want to fail as soon as one offset isn't found
+    if ((offs_s->allproc = find_allproc(toolbox)) && (offs_s->my_proc = find_proc(toolbox, getpid())) &&
+        (offs_s->my_task_addr = read_pointer(toolbox, toolbox->offsets->my_proc + __task_offset)) &&
+        (offs_s->my_task_port = find_port(toolbox, mach_task_self())))
+        return offs_s;
+    else
+        return 0;
 }
 
 addr64_t find_allproc(krw_handlers *toolbox)
@@ -197,17 +198,16 @@ addr64_t find_port(krw_handlers *toolbox, mach_port_name_t port)
 
     printf("Finding task for port %x", port);
 
-    if (!toolbox->offsets->myproc)
+    if (!(toolbox->allproc && toolbox->offsets->my_task_addr))
     {
-        printf("myproc not initiliased in struct?\n");
+        printf("toolbox not [fully] initiliased?\n");
         return 0;
     }
 
-    uint64_t task_addr, itk_space, is_table = 0;
+    uint64_t itk_space, is_table = 0;
 
     // From our proc -> task_struct -> itk_space (ports)
-    if (!(task_addr = read_pointer(toolbox, toolbox->offsets->myproc + __task_offset)) ||
-        (!(itk_space = read_pointer(toolbox, task_addr + __itk_space_offset))) ||
+    if ((!(itk_space = read_pointer(toolbox, toolbox->offsets->my_task_addr + __itk_space_offset))) ||
         (!(is_table = read_pointer(toolbox, itk_space + __is_table_offset))))
     {
         printf("Failed to read task details\n");
@@ -225,17 +225,11 @@ addr64_t find_port(krw_handlers *toolbox, mach_port_name_t port)
         return 0;
     }
 
-    addr64_t selfproc2 = read_pointer(toolbox, port_addr + __bsd_info);
-    if (selfproc2 != 1)
-    {
-        printf("ohter %llx %llx %llx", task_addr, itk_space, is_table);
-    }
+    return port_addr;
 
     /* ipc_entry defined here: (https://opensource.apple.com/source/xnu/xnu-201/osfmk/ipc/ipc_entry.h.auto.html)
     more here: https://github.com/maximehip/mach_portal
     basically this is used to map the port name (userland representation) to the port object (kernel representation)*/
-
-    return port_addr;
 }
 
 uint8_t *find_lcmds(krw_handlers *toolbox, uint32_t type)

