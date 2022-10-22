@@ -14,7 +14,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/param.h>
 #include <unistd.h>
+
+// Yo?
+#include "../headers/shenanigans.h"
 
 // strip pointer authentication codes (PAC) from signed pointers (arm64e)
 #define STRIP_PAC(ptr) (ptr | 0xFFFFFF8000000000)
@@ -112,5 +116,8 @@ seg *find_store_s64(krw_handlers *toolbox, const char *segN, const char *sectN);
 
 // find proc struct of program with the pid in the linked list in kernel mem (1 limitation, check error)
 addr64_t find_proc(krw_handlers *toolbox, pid_t pid);
+
+// find the pid of a program using its name
+pid_t find_pid(krw_handlers *toolbox, const char *name);
 
 #endif
