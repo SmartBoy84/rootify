@@ -1,6 +1,15 @@
 #include "../include/tools.h"
 #include "../include/kernel.h"
 
+int add_tc(krw_handlers *toolbox, char *file)
+{
+    if (access(file, R_OK))
+    {
+        printf("Failed to access file!");
+        return 0;
+    }
+}
+
 int safe_elevate(krw_handlers *toolbox, pid_t pid)
 {
     addr64_t ucred_s = read_pointer(toolbox, find_proc(toolbox, pid) + __ucred_offset);

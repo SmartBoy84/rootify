@@ -136,7 +136,7 @@ pid_t find_pid(krw_handlers *toolbox, const char *name)
             continue;
         }
 
-        if (strstr(name, path_buffer))
+        if (strstr(name, path_buffer) || strstr(path_buffer, name))
             return tpid;
 
         if (toolbox->kread(allproc_s, &allproc_s, sizeof(allproc_s)))
@@ -236,8 +236,7 @@ addr64_t find_allproc(krw_handlers *toolbox)
 
 addr64_t find_port(krw_handlers *toolbox, mach_port_name_t port)
 {
-    // from here:
-    // https://github.com/jakeajames/multi_path/blob/master/multi_path/jelbrek/kern_utils.m
+    // from here: https://github.com/jakeajames/multi_path/blob/master/multi_path/jelbrek/kern_utils.m
 
     printf("Finding task for port %x", port);
 
@@ -260,8 +259,7 @@ addr64_t find_port(krw_handlers *toolbox, mach_port_name_t port)
     // get this process's mach port
     uint32_t port_index = port >> 8;
 
-    // Now read the address associated with our port in the itk_space (just use
-    // our own processes port space)
+    // Now read the address associated with our port in the itk_space (just use our own processes port space)
     addr64_t port_addr = 0;
     if (!(port_addr = read_pointer(toolbox, is_table + (port_index * __sizeof_ipc_entry_t))))
     {
@@ -274,8 +272,7 @@ addr64_t find_port(krw_handlers *toolbox, mach_port_name_t port)
     /* ipc_entry defined here:
     (https://opensource.apple.com/source/xnu/xnu-201/osfmk/ipc/ipc_entry.h.auto.html)
     more here: https://github.com/maximehip/mach_portal
-    basically this is used to map the port name (userland representation) to the
-    port object (kernel representation)*/
+    basically this is used to map the port name (userland representation) to the port object (kernel representation)*/
 }
 
 uint8_t *find_lcmds(krw_handlers *toolbox, uint32_t type)
@@ -351,8 +348,7 @@ seg *find_store_s64(krw_handlers *toolbox, const char *segN, const char *sectN)
                         free(buff);
                         free(Data);
 
-                        return 0; // consider the whole struct dead if the data can't be
-                                  // read
+                        return 0; // consider the whole struct dead if the data can't be read
                     }
                     else
                     {
